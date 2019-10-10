@@ -2,6 +2,7 @@ package iraboo.example.todolist
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import io.realm.Realm
 import io.realm.kotlin.createObject
 import io.realm.kotlin.where
@@ -18,11 +19,45 @@ class EditActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
+
+        val id = intent.getLongExtra("id", -1L)
+        if (id == -1L) {
+            insertMode()
+        } else {
+            updateMode(id)
+        }
+
+        calendarView.setOnDateChangeListener { view, year, month, dayOfMonth ->
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         realm.close()
+    }
+
+    private fun insertMode() {
+        deleteFab.visibility = View.GONE
+        doneFab.setOnClickListener {
+            insertTodo()
+        }
+    }
+
+    private fun updateMode(id: Long) {
+        val todo = realm.where<Todo>().equalTo("id", id).findFirst()!!
+        todoEditText.setText(todo.title)
+        calendarView.date = todo.date
+
+        doneFab.setOnClickListener {
+            updateTodo(id)
+        }
+
+        deleteFab.setOnClickListener {
+            deleteTodo(id)
+        }
     }
 
     private fun insertTodo() {
